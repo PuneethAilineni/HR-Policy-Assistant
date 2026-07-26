@@ -5,10 +5,9 @@ from typing import List
 from Utils import logger
 
 class Splitter():
-    def __init__(self, documents: List[Document]):
-        self.documents = documents
-
-    def split_documents(self) -> List[Document]:
+    def __init__(self):
+        pass
+    def split_documents(self, documents: List[Document]) -> List[Document]:
         headers_to_split_on = [
             ("#", "Header 1"),
             ("##", "Header 2"),
@@ -17,7 +16,7 @@ class Splitter():
         markdown_splitter = MarkdownHeaderTextSplitter(headers_to_split_on=headers_to_split_on)
 
         semantic_chunks = []
-        for doc in self.documents:
+        for doc in documents:
             source_path = doc.metadata.get('source', 'unknown_source')
             
             md_splits = markdown_splitter.split_text(doc.page_content)

@@ -8,15 +8,15 @@ from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from langchain_core.documents import Document
 from Utils import logger
 
-class Loader(BaseLoader):
-    def __init__(self, folder_path: str):
-        self.folder_path = folder_path
+class Loader():
+    def __init__(self):
+        pass
 
-    def load(self) -> list[Document]:
+    def load(self, folder_path: str) -> list[Document]:
         docs = []
         try:
             dir_loader = DirectoryLoader(
-                path=self.folder_path,
+                path=folder_path,
                 glob="**/*.md",
                 loader_cls=TextLoader,
                 loader_kwargs={'encoding': 'utf-8'},
