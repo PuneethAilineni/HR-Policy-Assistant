@@ -35,18 +35,11 @@ class Evaluate():
             timeout=30
         )
         ragas_llm = llm_factory('meta/llama-3.1-8b-instruct', client=nvidia_client, adapter='instructor')
-        ragas_embeddings = embedding_factory(
-            'openai', 
-            model='nvidia/nv-embedcode-7b-v1', 
-            client=nvidia_client
-        )
 
         self.context_precision = ContextPrecision(llm=ragas_llm)
         self.context_recall = ContextRecall(llm=ragas_llm)
         self.context_relevance = ContextRelevance(llm=ragas_llm)
         self.faithfulness = Faithfulness(llm=ragas_llm)
-        self.answer_relevancy = AnswerRelevancy(llm=ragas_llm, embeddings=ragas_embeddings)
-        self.answer_correctness = AnswerCorrectness(llm=ragas_llm, embeddings=ragas_embeddings)
 
 
     def format_docs(self, docs: list[Document]) -> str:
@@ -134,8 +127,6 @@ class Evaluate():
         chat_chain = self.get_chat_chain()
         
         faithfulness_scores = []
-        relevancy_scores = []
-        correctness_scores = []
         
         for i, sample in enumerate(samples):
             print(f"Sample {i+1}/{len(samples)}: {sample.user_input[:50]}...")
@@ -154,20 +145,8 @@ class Evaluate():
                 )
                 faithfulness_scores.append(f_res.value)
                 
-                rel_res = await self.answer_relevancy.ascore(
-                    user_input=sample.user_input,
-                    response=answer
-                )
-                relevancy_scores.append(rel_res.value)
                 
-                corr_res = await self.answer_correctness.ascore(
-                    user_input=sample.user_input,
-                    response=answer,
-                    reference=sample.reference
-                )
-                correctness_scores.append(corr_res.value)
-                
-                print(f"  F: {f_res.value:.2f}, Rel: {rel_res.value:.2f}, Corr: {corr_res.value:.2f}")
+                print(f"  F: {f_res.value:.2f}")
             except Exception as e:
                 print(f"  Error evaluating sample {i+1}: {e}")
                 continue
@@ -177,8 +156,6 @@ class Evaluate():
 
         return {
             "faithfulness": sum(faithfulness_scores) / len(faithfulness_scores),
-            "answer_relevancy": sum(relevancy_scores) / len(relevancy_scores),
-            "answer_correctness": sum(correctness_scores) / len(correctness_scores),
         }
 
 
@@ -186,14 +163,14 @@ class Evaluate():
         """Run complete evaluation pipeline."""
         samples = HR_POLICY_EVAL_DATASET
         
-        # retriever_results = await self.run_retriever_evaluation(samples[:1])
-        # print(f"\nRetriever results: {retriever_results}")
+        retriever_results = await self.run_retriever_evaluation(samples)
+        print(f"\nRetriever results: {retriever_results}")
         
-        generation_results = await self.run_generation_evaluation(samples[:1])
+        generation_results = await self.run_generation_evaluation(samples)
         print(f"\nGeneration results: {generation_results}")
         
         results = {
-            # "retriever": retriever_results,
+            "retriever": retriever_results,
             "generation": generation_results,
             "num_samples": len(samples),
         }
