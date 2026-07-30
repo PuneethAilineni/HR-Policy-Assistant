@@ -25,7 +25,7 @@ class Splitter():
                 split.metadata['source'] = source_path
                 semantic_chunks.append(split)
 
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=100)
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=2500, chunk_overlap=250)
         final_ready_chunks = text_splitter.split_documents(semantic_chunks)
 
         logger.info(f"Created {len(final_ready_chunks)} chunks ready for your Vector Database.")

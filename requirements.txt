@@ -3,7 +3,7 @@ langchain-core
 langchain-nvidia-ai-endpoints
 langchain-chroma
 langchain-text-splitters
-langchain-community
+langchain-community<0.4
 langchain-classic
 ragas
 python-dotenv

@@ -1,6 +1,5 @@
 import os
 import sys
-
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import json
 import asyncio
@@ -8,6 +7,7 @@ from typing import List, Dict, Any
 
 from dotenv import load_dotenv
 load_dotenv()
+from Utils import logger
 from openai import AsyncOpenAI
 from ragas.llms import llm_factory
 from ragas.embeddings import embedding_factory
@@ -69,7 +69,7 @@ class Evaluate():
         if samples is None:
             samples = HR_POLICY_EVAL_DATASET
         
-        print(f"\n--- Running Retriever Evaluation on {len(samples)} samples ---")
+        logger.info(f"\n--- Running Retriever Evaluation on {len(samples)} samples ---")
         retriever = ReRanker()
         
         precision_scores = []
@@ -77,7 +77,7 @@ class Evaluate():
         relevance_scores = []
         
         for i, sample in enumerate(samples):
-            print(f"Sample {i+1}/{len(samples)}: {sample.user_input[:50]}...")
+            logger.info(f"Sample {i+1}/{len(samples)}: {sample.user_input[:50]}...")
             try:
                 retrieved_docs = retriever.invoke(sample.user_input)
                 contexts = [doc.page_content for doc in retrieved_docs]
@@ -102,9 +102,9 @@ class Evaluate():
                 )
                 relevance_scores.append(rel_res.value)
                 
-                print(f"  Prescision: {p_res.value:.2f}, Recall: {r_res.value:.2f}, context_Relevance: {rel_res.value:.2f}")
+                logger.info(f"  Prescision: {p_res.value:.2f}, Recall: {r_res.value:.2f}, context_Relevance: {rel_res.value:.2f}")
             except Exception as e:
-                print(f"  Error evaluating sample {i+1}: {e}")
+                logger.warning(f"  Error evaluating sample {i+1}: {e}")
                 continue
 
         if not precision_scores:
@@ -122,21 +122,21 @@ class Evaluate():
         if samples is None:
             samples = HR_POLICY_EVAL_DATASET
             
-        print(f"\n--- Running Generation Evaluation on {len(samples)} samples ---")
+        logger.info(f"\n--- Running Generation Evaluation on {len(samples)} samples ---")
         retriever = ReRanker()
         chat_chain = self.get_chat_chain()
         
         faithfulness_scores = []
         
         for i, sample in enumerate(samples):
-            print(f"Sample {i+1}/{len(samples)}: {sample.user_input[:50]}...")
+            logger.info(f"Sample {i+1}/{len(samples)}: {sample.user_input[:50]}...")
             try:
                 retrieved_docs = retriever.invoke(sample.user_input)
                 contexts = [doc.page_content for doc in retrieved_docs]
                 context_str = self.format_docs(retrieved_docs)
                 
                 answer = chat_chain.invoke({"context": context_str, "input": sample.user_input})
-                print(answer)
+                logger.info(answer)
                 
                 f_res = await self.faithfulness.ascore(
                     user_input=sample.user_input,
@@ -146,9 +146,9 @@ class Evaluate():
                 faithfulness_scores.append(f_res.value)
                 
                 
-                print(f"  F: {f_res.value:.2f}")
+                logger.info(f"  F: {f_res.value:.2f}")
             except Exception as e:
-                print(f"  Error evaluating sample {i+1}: {e}")
+                logger.warning(f"  Error evaluating sample {i+1}: {e}")
                 continue
 
         if not faithfulness_scores:
@@ -164,10 +164,10 @@ class Evaluate():
         samples = HR_POLICY_EVAL_DATASET
         
         retriever_results = await self.run_retriever_evaluation(samples)
-        print(f"\nRetriever results: {retriever_results}")
+        logger.info(f"\nRetriever results: {retriever_results}")
         
         generation_results = await self.run_generation_evaluation(samples)
-        print(f"\nGeneration results: {generation_results}")
+        logger.info(f"\nGeneration results: {generation_results}")
         
         results = {
             "retriever": retriever_results,
@@ -180,7 +180,7 @@ class Evaluate():
         with open(output_path, "w") as f:
             json.dump(results, f, indent=2)
         
-        print(f"\nResults saved to {output_path}")
+        logger.info(f"\nResults saved to {output_path}")
         return results
 
 
